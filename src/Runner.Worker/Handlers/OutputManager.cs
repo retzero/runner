@@ -78,8 +78,10 @@ namespace GitHub.Runner.Worker.Handlers
 
         public void OnDataReceived(object sender, ProcessDataReceivedEventArgs e)
         {
-            _stallManager.OnDataReceived(sender, e);
-
+            if (_stallManager != null)
+            {
+                _stallManager.OnDataReceived(sender, e);
+            }
             var line = e.Data;
 
             // ## commands
