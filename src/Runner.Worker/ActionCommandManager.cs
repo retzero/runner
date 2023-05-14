@@ -1,12 +1,12 @@
-using GitHub.DistributedTask.Pipelines.ContextData;
-using GitHub.DistributedTask.WebApi;
-using GitHub.Runner.Worker.Container;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using GitHub.DistributedTask.Pipelines.ContextData;
+using GitHub.DistributedTask.WebApi;
 using GitHub.Runner.Common;
 using GitHub.Runner.Sdk;
+using GitHub.Runner.Worker.Container;
 
 namespace GitHub.Runner.Worker
 {

@@ -1,10 +1,10 @@
-using GitHub.DistributedTask.WebApi;
-using GitHub.Runner.Worker.Container;
-using GitHub.Runner.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using GitHub.DistributedTask.WebApi;
+using GitHub.Runner.Common;
+using GitHub.Runner.Worker.Container;
 
 namespace GitHub.Runner.Worker
 {
@@ -150,10 +150,32 @@ namespace GitHub.Runner.Worker
             string name,
             string value)
         {
+            foreach (var blocked in _setEnvBlockList)
+            {
+                if (string.Equals(blocked, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Log Telemetry and let user know they shouldn't do this
+                    var issue = new Issue()
+                    {
+                        Type = IssueType.Error,
+                        Message = $"Can't update {blocked} environment variable using $GITHUB_ENV file."
+                    };
+                    issue.Data[Constants.Runner.InternalTelemetryIssueDataKey] = $"{Constants.Runner.UnsupportedCommand}_{name}";
+                    context.AddIssue(issue, ExecutionContextLogOptions.Default);
+
+                    return;
+                }
+            }
+
             context.Global.EnvironmentVariables[name] = value;
             context.SetEnvContext(name, value);
             context.Debug($"{name}='{value}'");
         }
+
+        private static string[] _setEnvBlockList =
+        {
+            "NODE_OPTIONS"
+        };
     }
 
     public sealed class CreateStepSummaryCommand : RunnerService, IFileCommandExtension
@@ -281,7 +303,7 @@ namespace GitHub.Runner.Worker
         }
     }
 
-    public sealed class EnvFileKeyValuePairs: IEnumerable<KeyValuePair<string, string>>
+    public sealed class EnvFileKeyValuePairs : IEnumerable<KeyValuePair<string, string>>
     {
         private IExecutionContext _context;
         private string _filePath;
