@@ -29,8 +29,10 @@ namespace GitHub.Runner.Worker.Expressions
             var isCompositeMainStep = executionContext.IsEmbedded && executionContext.Stage == ActionRunStage.Main;
             if (isCompositeMainStep)
             {
-                ActionResult actionStatus = EnumUtil.TryParse<ActionResult>(executionContext.GetGitHubContext("action_status")) ?? ActionResult.Success;
-                return actionStatus == ActionResult.Success;
+                // executionContext belongs to the composite STEP, executionContext.Parent belongs to the composite ACTION
+                ArgUtil.NotNull(executionContext.Parent, nameof(executionContext.Parent));
+                var compositeActionStatus = executionContext.Parent.Result?.ToActionResult() ?? ActionResult.Success;
+                return compositeActionStatus == ActionResult.Success;
             }
             else
             {

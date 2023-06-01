@@ -31,11 +31,7 @@
     </Target>
 
     <ItemGroup>
-        <ProjectFiles Include="Sdk/Sdk.csproj" />
-        <ProjectFiles Include="Runner.Common/Runner.Common.csproj" />
-        <ProjectFiles Include="Runner.Listener/Runner.Listener.csproj" />
         <ProjectFiles Include="Runner.Worker/Runner.Worker.csproj" />
-        <ProjectFiles Include="Runner.PluginHost/Runner.PluginHost.csproj" />
         <ProjectFiles Include="Runner.Sdk/Runner.Sdk.csproj" />
         <ProjectFiles Include="Runner.Plugins/Runner.Plugins.csproj" />
     </ItemGroup>
