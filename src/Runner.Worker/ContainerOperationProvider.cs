@@ -527,6 +527,7 @@ namespace GitHub.Runner.Worker
             }
 #pragma warning restore CA1416
 #else
+            /*
             var initProcessCgroup = File.ReadLines("/proc/1/cgroup");
             if (initProcessCgroup.Any(x => x.IndexOf(":/docker/", StringComparison.OrdinalIgnoreCase) >= 0))
             {
@@ -534,6 +535,7 @@ namespace GitHub.Runner.Worker
                 executionContext.Warning("Container feature is not supported when runner is already running inside container.");
                 executionContext.Warning("Run the container at your own risk.");
             }
+            */
 #endif
 
 #if OS_WINDOWS
