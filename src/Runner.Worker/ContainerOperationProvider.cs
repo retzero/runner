@@ -466,18 +466,22 @@ namespace GitHub.Runner.Worker
             {
                 throw new InvalidOperationException($"Failed to create directory to store registry client credentials: {e.Message}");
             }
-            var loginExitCode = await _dockerManager.DockerLogin(
-                executionContext,
-                configLocation,
-                container.RegistryServer,
-                container.RegistryAuthUsername,
-                container.RegistryAuthPassword);
-
-            if (loginExitCode != 0)
+            for(int loginAttempt = 1; loginAttempt <= 5; loginAttempt = loginAttempt + 1)
             {
-                throw new InvalidOperationException($"Docker login for '{container.RegistryServer}' failed with exit code {loginExitCode}");
+                var loginExitCode = await _dockerManager.DockerLogin(
+                    executionContext,
+                    configLocation,
+                    container.RegistryServer,
+                    container.RegistryAuthUsername,
+                    container.RegistryAuthPassword);
+                if (loginExitCode != 0)
+                {
+                    executionContext.Warning($"Docker login for '{container.RegistryServer}' failed with exit code {loginExitCode}");
+                } else {
+                    return configLocation;
+                }
             }
-            return configLocation;
+            throw new InvalidOperationException($"Docker login attempt timeout.");
         }
 
         private void ContainerRegistryLogout(string configLocation)
