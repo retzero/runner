@@ -286,6 +286,23 @@ namespace GitHub.Runner.Worker
                 var containerEnv = await _dockerManager.DockerInspect(executionContext, container.ContainerId, configEnvFormat);
                 container.ContainerRuntimePath = DockerUtil.ParsePathFromConfigEnv(containerEnv);
                 executionContext.JobContext.Container["id"] = new StringContextData(container.ContainerId);
+
+                // Append well known internal hosts
+                string wellknownInternalHosts = Environment.GetEnvironmentVariable("WELLKNOWN_INTERNAL_HOSTS");
+                executionContext.Warning($"Well known internal host - START: [{wellknownInternalHosts}]");
+                if (!String.IsNullOrEmpty(wellknownInternalHosts)) {
+                    string[] items = wellknownInternalHosts.Split(',');
+                    foreach (var item in items)
+                    {
+                        executionContext.Warning($"Well known internal host - LINE: [{item}]");
+                        string[] ipWithDomain = item.Split('|');
+                        if (ipWithDomain.Length == 2) {
+                            string ipAddress = ipWithDomain[0];
+                            string domainName = ipWithDomain[1];
+                            executionContext.Warning($"Well known internal host - ITEM: [{domainName}] => [{ipAddress}]");
+                        }
+                    }
+                }
             }
             executionContext.Output("##[endgroup]");
         }
