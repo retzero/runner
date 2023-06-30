@@ -293,7 +293,7 @@ namespace GitHub.Runner.Worker
                     string translateDomainScript = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Temp), "wellknown_domains.sh");
                     string translateDomainContainerScript = Path.Combine(container.TranslateToContainerPath(HostContext.GetDirectory(WellKnownDirectory.Temp)), "wellknown_domains.sh");
                     if (File.Exists(translateDomainScript)) {
-                        await _dockerManager.ExecuteDockerCommandAsync(executionContext, "exec", $"{container.ContainerId} sh {translateDomainContainerScript}");
+                        await _dockerManager.DockerExec(executionContext, $"{container.ContainerId}", string.Empty, $"sh {translateDomainContainerScript}");
                     }
                 }
                 catch (Exception e)
