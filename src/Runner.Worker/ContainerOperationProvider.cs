@@ -290,8 +290,8 @@ namespace GitHub.Runner.Worker
                 // Append well known internal domains
                 try
                 {
-                    string translateDomainScript = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Temp), "wellknown_domains.sh");
-                    string translateDomainContainerScript = Path.Combine(container.TranslateToContainerPath(HostContext.GetDirectory(WellKnownDirectory.Temp)), "wellknown_domains.sh");
+                    string translateDomainScript = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Work), "wellknown_domains.sh");
+                    string translateDomainContainerScript = Path.Combine(container.TranslateToContainerPath(HostContext.GetDirectory(WellKnownDirectory.Work)), "wellknown_domains.sh");
                     if (File.Exists(translateDomainScript)) {
                         await _dockerManager.DockerExec(executionContext, $"{container.ContainerId}", string.Empty, $"sh {translateDomainContainerScript}");
                     }
