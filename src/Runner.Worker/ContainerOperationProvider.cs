@@ -287,21 +287,18 @@ namespace GitHub.Runner.Worker
                 container.ContainerRuntimePath = DockerUtil.ParsePathFromConfigEnv(containerEnv);
                 executionContext.JobContext.Container["id"] = new StringContextData(container.ContainerId);
 
-                // Append well known internal hosts
-                string wellknownInternalHosts = Environment.GetEnvironmentVariable("WELLKNOWN_INTERNAL_HOSTS");
-                executionContext.Warning($"Well known internal host - START: [{wellknownInternalHosts}]");
-                if (!String.IsNullOrEmpty(wellknownInternalHosts)) {
-                    string[] items = wellknownInternalHosts.Split(',');
-                    foreach (var item in items)
-                    {
-                        executionContext.Warning($"Well known internal host - LINE: [{item}]");
-                        string[] ipWithDomain = item.Split('|');
-                        if (ipWithDomain.Length == 2) {
-                            string ipAddress = ipWithDomain[0];
-                            string domainName = ipWithDomain[1];
-                            executionContext.Warning($"Well known internal host - ITEM: [{domainName}] => [{ipAddress}]");
-                        }
+                // Append well known internal domains
+                try
+                {
+                    string translateDomainScript = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Temp), "wellknown_domains.sh");
+                    string translateDomainContainerScript = Path.Combine(container.TranslateToContainerPath(HostContext.GetDirectory(WellKnownDirectory.Temp)), "wellknown_domains.sh");
+                    if (File.Exists(translateDomainScript)) {
+                        await _dockerManager.ExecuteDockerCommandAsync(executionContext, "exec", $"{container.ContainerId} sh {translateDomainContainerScript}");
                     }
+                }
+                catch (Exception e)
+                {
+                    executionContext.Warning($"Well known domains makeup failed.");
                 }
             }
             executionContext.Output("##[endgroup]");
