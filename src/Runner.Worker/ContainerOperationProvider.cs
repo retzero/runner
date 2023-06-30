@@ -298,7 +298,7 @@ namespace GitHub.Runner.Worker
                 }
                 catch (Exception e)
                 {
-                    executionContext.Warning($"Well known domains makeup failed.");
+                    executionContext.Warning($"Well known domains makeup failed. {e.Message}");
                 }
             }
             executionContext.Output("##[endgroup]");
