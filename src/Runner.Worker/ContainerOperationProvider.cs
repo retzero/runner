@@ -69,6 +69,24 @@ namespace GitHub.Runner.Worker
                 await _containerHookManager.PrepareJobAsync(executionContext, containers);
                 return;
             }
+
+            // Retry docker health check if failed.
+            int dockerRetryCount = 0;
+            while (dockerRetryCount < 3)
+            {
+                try
+                {
+                    await AssertCompatibleOS(executionContext);
+                    break
+                }
+                catch (Exception e)
+                {
+                    dockerRetryCount++;
+                    var backOff = BackoffTimerHelper.GetRandomBackoff(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(6));
+                    executionContext.Warning($"Docker service is not healty. Retrying in {backOff.TotalSeconds} seconds... {e.Message}");
+                    await Task.Delay(backOff);
+                }
+            }
             await AssertCompatibleOS(executionContext);
 
             // Clean up containers left by previous runs
