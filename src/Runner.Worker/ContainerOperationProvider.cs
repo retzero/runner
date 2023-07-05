@@ -77,7 +77,7 @@ namespace GitHub.Runner.Worker
                 try
                 {
                     await AssertCompatibleOS(executionContext);
-                    break
+                    break;
                 }
                 catch (Exception e)
                 {
