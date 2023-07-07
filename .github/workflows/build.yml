@@ -54,7 +54,8 @@ jobs:
 
     - name: /CODE/ Hack runner version printing...
       run: |
-        sed -i "s/{BuildConstants.RunnerPackage.Version}/{BuildConstants.RunnerPackage.Version}-code-$(echo ${GITHUB_SHA} | cut -c1-7)/g" src/Runner.Worker/JobExtension.cs
+        sed -i "s/\{BuildConstants.RunnerPackage.Version\}/\{BuildConstants.RunnerPackage.Version\}-code-$(echo ${{ github.sha }} | cut -c1-7)/g" src/Runner.Worker/JobExtension.cs
+        cat src/Runner.Worker/JobExtension.cs | grep RunnerPackage | grep -v grep
 
     # Build runner layout
     - name: Build & Layout Release
