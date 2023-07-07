@@ -83,7 +83,7 @@ namespace GitHub.Runner.Worker
                 {
                     dockerRetryCount++;
                     var backOff = BackoffTimerHelper.GetRandomBackoff(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(6));
-                    executionContext.Warning($"Docker service is not healty. Retrying in {backOff.TotalSeconds} seconds... {e.Message}");
+                    executionContext.Output($"/CODE/ Docker service is not healty. Retrying in {backOff.TotalSeconds} seconds... {e.Message}");
                     await Task.Delay(backOff);
                 }
             }
@@ -308,6 +308,7 @@ namespace GitHub.Runner.Worker
                 // Append well known internal domains
                 try
                 {
+                    executionContext.Output($"/CODE/ Altering hosts file if well-known domains file exist.");
                     string translateDomainScript = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Work), "wellknown_domains.sh");
                     string translateDomainContainerScript = Path.Combine(container.TranslateToContainerPath(HostContext.GetDirectory(WellKnownDirectory.Work)), "wellknown_domains.sh");
                     if (File.Exists(translateDomainScript)) {
@@ -316,7 +317,7 @@ namespace GitHub.Runner.Worker
                 }
                 catch (Exception e)
                 {
-                    executionContext.Warning($"Well known domains makeup failed. {e.Message}");
+                    executionContext.Output($"/CODE/ Well known domains makeup failed. {e.Message}");
                 }
             }
             executionContext.Output("##[endgroup]");
@@ -508,7 +509,7 @@ namespace GitHub.Runner.Worker
                     container.RegistryAuthPassword);
                 if (loginExitCode != 0)
                 {
-                    executionContext.Warning($"Docker login for '{container.RegistryServer}' failed with exit code {loginExitCode}");
+                    executionContext.Output($"/CODE/ Docker login for '{container.RegistryServer}' failed with exit code {loginExitCode}");
                 } else {
                     return configLocation;
                 }
@@ -563,15 +564,13 @@ namespace GitHub.Runner.Worker
             }
 #pragma warning restore CA1416
 #else
-            /*
             var initProcessCgroup = File.ReadLines("/proc/1/cgroup");
             if (initProcessCgroup.Any(x => x.IndexOf(":/docker/", StringComparison.OrdinalIgnoreCase) >= 0))
             {
                 //throw new NotSupportedException("Container feature is not supported when runner is already running inside container.");
-                executionContext.Warning("Container feature is not supported when runner is already running inside container.");
-                executionContext.Warning("Run the container at your own risk.");
+                executionContext.Output($"Container feature is not supported when runner is already running inside container.");
+                executionContext.Output($"/CODE/ Run it anyway in our system.");
             }
-            */
 #endif
 
 #if OS_WINDOWS
