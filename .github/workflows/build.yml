@@ -52,6 +52,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: /CODE/ Hack runner version printing...
+      run: |
+        sed -i "s/{BuildConstants.RunnerPackage.Version}/{BuildConstants.RunnerPackage.Version}-code-$(echo ${GITHUB_SHA} | cut -c1-7)/g" src/Runner.Worker/JobExtension.cs
+
     # Build runner layout
     - name: Build & Layout Release
       run: |
