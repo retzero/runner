@@ -55,7 +55,7 @@ jobs:
     - name: /CODE/ linux - Hack runner version printing...
       if: matrix.runtime == 'linux-x64' || matrix.runtime == 'linux-arm64'
       run: |
-        sed -i "s/BuildConstants.RunnerPackage.Version}'/BuildConstants.RunnerPackage.Version}-code-$(echo ${{ github.sha }} | cut -c1-7) '/g" src/Runner.Worker/JobExtension.cs
+        sed -i "s/BuildConstants.RunnerPackage.Version}'/BuildConstants.RunnerPackage.Version}-code-$(echo ${{ github.sha }} | cut -c1-7)'/g" src/Runner.Worker/JobExtension.cs
         cat src/Runner.Worker/JobExtension.cs | grep RunnerPackage | grep -v grep
 
     - name: /CODE/ osx - Hack runner version printing...
