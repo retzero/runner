@@ -189,7 +189,7 @@ namespace GitHub.Runner.Worker
             string[] presetActions = null;
             try {
                 presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
-                executionContext.Output($"/CODE/ We have total [{presetActions.Count}] preset action library!");
+                executionContext.Output($"/CODE/ We have total [{presetActions.Length}] preset action library!");
                 //foreach (string presetAction in presetActions) {
                 //    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
                 //}
