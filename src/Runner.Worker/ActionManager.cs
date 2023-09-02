@@ -177,7 +177,7 @@ namespace GitHub.Runner.Worker
 
             foreach (var action in actions)
             {
-                executionContext.Output($"/CODE/ [{action.Name}] ({action.Id}) => {ction.Reference.Type}");
+                executionContext.Output($"/CODE/ [{action.Name}] ({action.Id}) => {action.Reference.Type}");
                 if (action.Reference.Type == Pipelines.ActionSourceType.ContainerRegistry)
                 {
                     ArgUtil.NotNull(action, nameof(action));
