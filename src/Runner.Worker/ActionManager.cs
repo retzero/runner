@@ -86,7 +86,7 @@ namespace GitHub.Runner.Worker
                 // /CODE/ Check if we're in the test... HACK.
                 var needKeepPresetActions = true;
                 try {
-                    executionContext.Output($"/CODE/ Check preset action library.");
+                    //executionContext.Output($"/CODE/ Check preset action library.");
                     string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
                     if (presetActions.Contains("notexist/no/notexist.completed")) {
                         needKeepPresetActions = false;
@@ -100,11 +100,12 @@ namespace GitHub.Runner.Worker
                 }
                 catch (Exception e) {
                     executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
+                    needKeepPresetActions = false;
                 }
                 if (needKeepPresetActions == true) {
-                    executionContext.Output($"/CODE/ Do not delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
+                    executionContext.Output($"/CODE/ Keep preset actions.");
                 } else {
-                    executionContext.Output($"/CODE/ Going to delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
+                    //executionContext.Output($"/CODE/ Going to delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
                     IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
                 }
             }
@@ -185,13 +186,13 @@ namespace GitHub.Runner.Worker
             }
             var repositoryActions = new List<Pipelines.ActionStep>();
 
-            // /CODE/
+            string[] presetActions = null;
             try {
-                executionContext.Output($"/CODE/ Check preset action library.");
-                string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
-                foreach (string presetAction in presetActions) {
-                    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
-                }
+                presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
+                executionContext.Output($"/CODE/ We have total [{presetActions.Count}] preset action library!");
+                //foreach (string presetAction in presetActions) {
+                //    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
+                //}
             }
             catch (Exception e) {
                 executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
@@ -199,7 +200,7 @@ namespace GitHub.Runner.Worker
 
             foreach (var action in actions)
             {
-                executionContext.Output($"/CODE/ [{action.Name}] ({action.Id}) => {action.Reference.Type}");
+                executionContext.Output($"/CODE/ {action.Name} ({action.Id}) => {action.Reference.Type}");
                 if (action.Reference.Type == Pipelines.ActionSourceType.ContainerRegistry)
                 {
                     ArgUtil.NotNull(action, nameof(action));
@@ -217,6 +218,9 @@ namespace GitHub.Runner.Worker
                 }
                 else if (action.Reference.Type == Pipelines.ActionSourceType.Repository)
                 {
+                    var repositoryReference = action.Reference as Pipelines.RepositoryPathReference;
+                    ArgUtil.NotNull(repositoryReference, nameof(repositoryReference));
+                    executionContext.Output($"/CODE/ {repositoryReference.Name}@{repositoryReference.Ref} => {repositoryReference.Path}");
                     repositoryActions.Add(action);
                 }
             }
