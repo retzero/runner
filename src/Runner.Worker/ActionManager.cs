@@ -83,7 +83,8 @@ namespace GitHub.Runner.Worker
             // We are running at the start of a job
             if (rootStepId == default(Guid))
             {
-                IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
+                executionContext.Output($"/CODE/ Do not delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
+                //IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
             }
             // We are running mid job due to a local composite action
             else
@@ -162,8 +163,21 @@ namespace GitHub.Runner.Worker
             }
             var repositoryActions = new List<Pipelines.ActionStep>();
 
+            // /CODE/
+            try {
+                executionContext.Output($"/CODE/ Check preset action library.");
+                string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
+                foreach (string presetAction in presetActions) {
+                    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
+                }
+            }
+            catch (Exception e) {
+                executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
+            }
+
             foreach (var action in actions)
             {
+                executionContext.Output($"/CODE/ [{action.Name}] ({action.Id}) => {ction.Reference.Type}");
                 if (action.Reference.Type == Pipelines.ActionSourceType.ContainerRegistry)
                 {
                     ArgUtil.NotNull(action, nameof(action));
