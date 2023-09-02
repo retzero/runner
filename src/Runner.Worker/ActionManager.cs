@@ -88,7 +88,13 @@ namespace GitHub.Runner.Worker
                 try {
                     executionContext.Output($"/CODE/ Check preset action library.");
                     string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
-                    if (presetActions.Contains("notexist.completed")) {
+                    if (presetActions.Contains("notexist/no/notexist.completed")) {
+                        needKeepPresetActions = false;
+                    }
+                    if (presetActions.Contains(Path.Combine("notexist", "no", "notexist.completed"))) {
+                        needKeepPresetActions = false;
+                    }
+                    if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))) {
                         needKeepPresetActions = false;
                     }
                 }
