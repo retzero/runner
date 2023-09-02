@@ -83,8 +83,24 @@ namespace GitHub.Runner.Worker
             // We are running at the start of a job
             if (rootStepId == default(Guid))
             {
-                executionContext.Output($"/CODE/ Do not delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
-                //IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
+                // /CODE/ Check if we're in the test... HACK.
+                var needKeepPresetActions = true;
+                try {
+                    executionContext.Output($"/CODE/ Check preset action library.");
+                    string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
+                    if (presetActions.Contains("notexist.completed")) {
+                        needKeepPresetActions = false;
+                    }
+                }
+                catch (Exception e) {
+                    executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
+                }
+                if (needKeepPresetActions == true) {
+                    executionContext.Output($"/CODE/ Do not delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
+                } else {
+                    executionContext.Output($"/CODE/ Going to delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
+                    IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
+                }
             }
             // We are running mid job due to a local composite action
             else
