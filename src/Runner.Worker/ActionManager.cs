@@ -102,9 +102,8 @@ namespace GitHub.Runner.Worker
                     executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
                     needKeepPresetActions = false;
                 }
-                if (needKeepPresetActions == true) {
-                    executionContext.Output($"/CODE/ Keep preset actions.");
-                } else {
+                //executionContext.Output($"/CODE/ Keep preset actions.");
+                if (needKeepPresetActions == false) {
                     //executionContext.Output($"/CODE/ Going to delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
                     IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
                 }
@@ -200,7 +199,7 @@ namespace GitHub.Runner.Worker
 
             foreach (var action in actions)
             {
-                executionContext.Output($"/CODE/ {action.Name} ({action.Id}) => {action.Reference.Type}");
+                //executionContext.Output($"/CODE/ {action.Name} ({action.Id}) => {action.Reference.Type}");
                 if (action.Reference.Type == Pipelines.ActionSourceType.ContainerRegistry)
                 {
                     ArgUtil.NotNull(action, nameof(action));
@@ -220,7 +219,7 @@ namespace GitHub.Runner.Worker
                 {
                     var repositoryReference = action.Reference as Pipelines.RepositoryPathReference;
                     ArgUtil.NotNull(repositoryReference, nameof(repositoryReference));
-                    executionContext.Output($"/CODE/ {repositoryReference.Name}@{repositoryReference.Ref} => {repositoryReference.Path}");
+                    //executionContext.Output($"/CODE/ {repositoryReference.Name}@{repositoryReference.Ref} => {repositoryReference.Path}");
                     repositoryActions.Add(action);
                 }
             }
