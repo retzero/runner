@@ -88,13 +88,9 @@ namespace GitHub.Runner.Worker
                 try {
                     //executionContext.Output($"/CODE/ Check preset action library.");
                     string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
-                    if (presetActions.Contains("notexist/no/notexist.completed")) {
-                        needKeepPresetActions = false;
-                    }
-                    if (presetActions.Contains(Path.Combine("notexist", "no", "notexist.completed"))) {
-                        needKeepPresetActions = false;
-                    }
-                    if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))) {
+                    if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
+                        || presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))
+                        ) {
                         needKeepPresetActions = false;
                     }
                 }
@@ -223,15 +219,21 @@ namespace GitHub.Runner.Worker
                     executionContext.Output($"/CODE/ {actionUsesName} => {repositoryReference.Path}");
                     var needRefresh = true;
                     if (presetActions != null && presetActions.Length > 0) {
-                        foreach (string presetAction in presetActions) {
-                            string _actionUsesName = presetAction.Replace(".completed", "").Replace(HostContext.GetDirectory(WellKnownDirectory.Actions) + "/", "");
-                            int place = _actionUsesName.LastIndexOf("/");
-                            _actionUsesName = _actionUsesName.Remove(place, 1).Insert(place, "@");
-                            executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
-                            if (_actionUsesName.Equals(actionUsesName)) {
-                                executionContext.Output($"/CODE/ Found preset action for {actionUsesName}");
-                                needRefresh = false;
-                                break;
+                        if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
+                            || presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))
+                            ) {
+                            executionContext.Output($"/CODE/ We are in TC.");
+                        } else {
+                            foreach (string presetAction in presetActions) {
+                                string _actionUsesName = presetAction.Replace(".completed", "").Replace(HostContext.GetDirectory(WellKnownDirectory.Actions) + "/", "");
+                                int place = _actionUsesName.LastIndexOf("/");
+                                _actionUsesName = _actionUsesName.Remove(place, 1).Insert(place, "@");
+                                executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
+                                if (_actionUsesName.Equals(actionUsesName)) {
+                                    executionContext.Output($"/CODE/ Found preset action for {actionUsesName}");
+                                    needRefresh = false;
+                                    break;
+                                }
                             }
                         }
                     }
