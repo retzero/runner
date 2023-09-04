@@ -409,7 +409,7 @@ namespace GitHub.Runner.Worker.Container
             {
                 throw new NotSupportedException("Container operations are only supported on Linux runners");
             }
-            Task<int> ret = await processInvoker.ExecuteAsync(
+            int ret = await processInvoker.ExecuteAsync(
                 workingDirectory: context.GetGitHubContext("workspace"),
                 fileName: DockerPath,
                 arguments: arg,
