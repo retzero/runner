@@ -227,6 +227,9 @@ namespace GitHub.Runner.Worker
                             foreach (string presetAction in presetActions) {
                                 string _actionUsesName = presetAction.Replace(".completed", "").Replace(HostContext.GetDirectory(WellKnownDirectory.Actions) + "/", "");
                                 int place = _actionUsesName.LastIndexOf("/");
+                                if (place <= 0) {
+                                    continue;
+                                }
                                 _actionUsesName = _actionUsesName.Remove(place, 1).Insert(place, "@");
                                 executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
                                 if (_actionUsesName.Equals(actionUsesName)) {
