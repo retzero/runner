@@ -19,6 +19,7 @@ namespace GitHub.Runner.Worker.Container
         Task<DockerVersion> DockerVersion(IExecutionContext context);
         Task<int> DockerPull(IExecutionContext context, string image);
         Task<int> DockerPull(IExecutionContext context, string image, string configFileDirectory);
+        Task<int> DockerTag(IExecutionContext context, string oldImageName, string newImageName);
         Task<int> DockerBuild(IExecutionContext context, string workingDirectory, string dockerFile, string dockerContext, string tag);
         Task<string> DockerCreate(IExecutionContext context, ContainerInfo container);
         Task<int> DockerRun(IExecutionContext context, ContainerInfo container, EventHandler<ProcessDataReceivedEventArgs> stdoutDataReceived, EventHandler<ProcessDataReceivedEventArgs> stderrDataReceived);
