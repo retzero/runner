@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -190,7 +190,7 @@ namespace GitHub.Runner.Worker
                 //}
             }
             catch (Exception e) {
-                executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
+                executionContext.Debug($"/CODE/ Listing preset actions failed. {e.Message}");
             }
 
             foreach (var action in actions)
