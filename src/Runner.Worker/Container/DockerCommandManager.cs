@@ -416,24 +416,6 @@ namespace GitHub.Runner.Worker.Container
 
         private async Task<int> ExecuteDockerCommandAsync(IExecutionContext context, string command, string options, string workingDirectory, CancellationToken cancellationToken = default(CancellationToken))
         {
-            context.Output($"/CODE/ Macnine Name: [{Environment.MachineName}]");
-            context.Output($"/CODE/ command: [{command}]");
-            context.Output($"/CODE/ options: [{options}]");
-            var originalImageName = "";
-            if (Environment.MachineName.StartsWith("code-runner-greenback-") || Environment.MachineName.StartsWith("code-runner-metronome-")) {
-                context.Output($"/CODE/ + Machine Name");
-                if (command.Equals("pull") || command.EndsWith(" pull")) {
-                    context.Output($"/CODE/ + Docker Pull");
-                    if (!options.Contains(" ") && options.StartsWith("ghcr.io/")) {
-                        context.Output($"/CODE/ + Docker Image");
-                        originalImageName = options;
-                        options = options.Replace("ghcr.io", "ghcr-docker-remote.bart.sec.samsung.net");
-                        context.Output($"/CODE/ Switch to BART. {originalImageName} {options}");
-                    }
-                }
-            }
-            context.Output($"/CODE/ Final options: [{options}]");
-
             string arg = $"{command} {options}".Trim();
             context.Command($"{DockerPath} {arg}");
 
@@ -452,7 +434,7 @@ namespace GitHub.Runner.Worker.Container
             {
                 throw new NotSupportedException("Container operations are only supported on Linux runners");
             }
-            int ret = await processInvoker.ExecuteAsync(
+            return await processInvoker.ExecuteAsync(
                 workingDirectory: workingDirectory ?? context.GetGitHubContext("workspace"),
                 fileName: DockerPath,
                 arguments: arg,
@@ -462,17 +444,6 @@ namespace GitHub.Runner.Worker.Container
                 killProcessOnCancel: false,
                 redirectStandardIn: null,
                 cancellationToken: cancellationToken);
-
-            try {
-                if (originalImageName != "" && originalImageName != options) {
-                    context.Output($"/CODE/ Restore original tag {options} {originalImageName}");
-                    await DockerTag(context, options, originalImageName);
-                }
-            } catch (Exception er) {
-                context.Output($"/CODE/ Tag exception {er}");
-            }
-            
-            return ret;
         }
 
         private async Task<List<string>> ExecuteDockerCommandAsync(IExecutionContext context, string command, string options)
