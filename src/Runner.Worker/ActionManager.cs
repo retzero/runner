@@ -621,6 +621,13 @@ namespace GitHub.Runner.Worker
 
             executionContext.Output($"##[group]Pull down action image '{setupInfo.Container.Image}'");
 
+            executionContext.Output($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{Environment.USE_BART_INSTEADOF_GHCR}]");
+            var finalImageToPull = setupInfo.Container.Image;
+            if (Environment.USE_BART_INSTEADOF_GHCR == "true" && setupInfo.Container.Image.StartsWith("ghcr.io/")) {
+                finalImageToPull = finalImageToPull.Replace("ghcr.io/", "ghcr-docker-remote.bart.sec.samsung.net/");
+                executionContext.Output($"/CODE/ Intermediate docker image to pull: [{finalImageToPull}]");
+            }
+
             // Pull down docker image with retry up to 3 times
             var dockerManager = HostContext.GetService<IDockerCommandManager>();
             int retryCount = 0;
@@ -642,6 +649,15 @@ namespace GitHub.Runner.Worker
                         await Task.Delay(backOff);
                     }
                 }
+            }
+
+            try {
+                if (Environment.USE_BART_INSTEADOF_GHCR == "true" && finalImageToPull != setupInfo.Container.Image) {
+                    executionContext.Output($"/CODE/ Recovering original docker image. [{finalImageToPull}] -> [{setupInfo.Container.Image}]");
+                    await dockerManager.DockerTag(finalImageToPull, setupInfo.Container.Image);
+                }
+            } catch (Exception er) {
+                executionContext.Output($"/CODE/ Recovering original docker image failed. [{er}]");
             }
             executionContext.Output("##[endgroup]");
 
