@@ -654,7 +654,7 @@ namespace GitHub.Runner.Worker
             try {
                 if (Environment.USE_BART_INSTEADOF_GHCR == "true" && finalImageToPull != setupInfo.Container.Image) {
                     executionContext.Output($"/CODE/ Recovering original docker image. [{finalImageToPull}] -> [{setupInfo.Container.Image}]");
-                    await dockerManager.DockerTag(finalImageToPull, setupInfo.Container.Image);
+                    await dockerManager.DockerTag(executionContext, finalImageToPull, setupInfo.Container.Image);
                 }
             } catch (Exception er) {
                 executionContext.Output($"/CODE/ Recovering original docker image failed. [{er}]");
