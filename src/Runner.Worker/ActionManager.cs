@@ -222,7 +222,7 @@ namespace GitHub.Runner.Worker
                     var actionUsesName = repositoryReference.Name + "@" + repositoryReference.Ref;
                     executionContext.Output($"/CODE/ {actionUsesName} => {repositoryReference.Path}");
                     var needRefresh = true;
-                    if (presetActions && presetActions.Length > 0) {
+                    if (presetActions != null && presetActions.Length > 0) {
                         foreach (string presetAction in presetActions) {
                             string _actionUsesName = presetAction.Replace(".completed", "").Replace(HostContext.GetDirectory(WellKnownDirectory.Actions) + "/", "");
                             int place = _actionUsesName.LastIndexOf("/");
