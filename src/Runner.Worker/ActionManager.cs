@@ -682,6 +682,17 @@ namespace GitHub.Runner.Worker
 
             executionContext.Output($"##[group]Build container for action use: '{setupInfo.Container.Dockerfile}'.");
 
+            try {
+                string dockerfileText = File.ReadAllText(setupInfo.Container.Dockerfile);
+                if (dockerfileText.Contains(" ghcr.io/")) {
+                    dockerfileText = dockerfileText.Replace(" ghcr.io/", " ghcr-docker-remote.bart.sec.samsung.net/");
+                    File.WriteAllText(setupInfo.Container.Dockerfile, dockerfileText);
+                    executionContext.Output($"/CODE/ Replacing ghcr.io to BART in Dockerfile.");
+                }
+            } catch (Exception er) {
+                executionContext.Output($"/CODE/ Replacing ghcr.io to BART in Dockerfile failed. [{er}]");
+            }
+
             // Build docker image with retry up to 3 times
             var dockerManager = HostContext.GetService<IDockerCommandManager>();
             int retryCount = 0;
