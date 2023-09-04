@@ -635,7 +635,7 @@ namespace GitHub.Runner.Worker
             int pullExitCode = 0;
             while (retryCount < 3)
             {
-                pullExitCode = await dockerManager.DockerPull(executionContext, setupInfo.Container.Image);
+                pullExitCode = await dockerManager.DockerPull(executionContext, finalImageToPull);
                 if (pullExitCode == 0)
                 {
                     break;
