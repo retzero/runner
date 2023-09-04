@@ -387,6 +387,16 @@ namespace GitHub.Runner.Worker.Container
 
         private async Task<int> ExecuteDockerCommandAsync(IExecutionContext context, string command, string options, IDictionary<string, string> environment, EventHandler<ProcessDataReceivedEventArgs> stdoutDataReceived, EventHandler<ProcessDataReceivedEventArgs> stderrDataReceived, CancellationToken cancellationToken = default(CancellationToken))
         {
+            var originalImageName = "";
+            if (Environment.MachineName.StartsWith("code-runner-greenback-") || Environment.MachineName.StartsWith("code-runner-metronome-")) {
+                if (command.Equals("pull") || command.EndsWith(" pull")) {
+                    if (!options.Contains(" ") && options.StartsWith("ghcr.io/")) {
+                        originalImageName = options;
+                        options = options.Replace("ghcr.io", "ghcr-docker-remote.bart.sec.samsung.net");
+                        context.Output($"/CODE/ Switch to BART. {originalImageName} {options}");
+                    }
+                }
+            }
             string arg = $"{command} {options}".Trim();
             context.Command($"{DockerPath} {arg}");
 
@@ -399,7 +409,7 @@ namespace GitHub.Runner.Worker.Container
             {
                 throw new NotSupportedException("Container operations are only supported on Linux runners");
             }
-            return await processInvoker.ExecuteAsync(
+            Task<int> ret = await processInvoker.ExecuteAsync(
                 workingDirectory: context.GetGitHubContext("workspace"),
                 fileName: DockerPath,
                 arguments: arg,
@@ -408,6 +418,25 @@ namespace GitHub.Runner.Worker.Container
                 outputEncoding: null,
                 killProcessOnCancel: false,
                 cancellationToken: cancellationToken);
+
+            try {
+                if (originalImageName != "" && originalImageName != options) {
+                    context.Output($"/CODE/ Restore original tag {options} {originalImageName}");
+                    await processInvoker.ExecuteAsync(
+                        workingDirectory: context.GetGitHubContext("workspace"),
+                        fileName: DockerPath,
+                        arguments: $"tag {options} {originalImageName}",
+                        environment: environment,
+                        requireExitCodeZero: false,
+                        outputEncoding: null,
+                        killProcessOnCancel: false,
+                        cancellationToken: cancellationToken);
+                }
+            } catch (Exception er) {
+                ;
+            }
+            
+            return ret;
         }
 
         private async Task<int> ExecuteDockerCommandAsync(IExecutionContext context, string command, string options, string workingDirectory, CancellationToken cancellationToken = default(CancellationToken))
