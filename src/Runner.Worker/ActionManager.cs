@@ -621,9 +621,10 @@ namespace GitHub.Runner.Worker
 
             executionContext.Output($"##[group]Pull down action image '{setupInfo.Container.Image}'");
 
-            executionContext.Output($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{Environment.USE_BART_INSTEADOF_GHCR}]");
+            var useBartInsteadOfGhcr = Environment.GetEnvironmentVariable("USE_BART_INSTEADOF_GHCR");
             var finalImageToPull = setupInfo.Container.Image;
-            if (Environment.USE_BART_INSTEADOF_GHCR == "true" && setupInfo.Container.Image.StartsWith("ghcr.io/")) {
+            executionContext.Output($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{useBartInsteadOfGhcr}]");
+            if (useBartInsteadOfGhcr == "true" && setupInfo.Container.Image.StartsWith("ghcr.io/")) {
                 finalImageToPull = finalImageToPull.Replace("ghcr.io/", "ghcr-docker-remote.bart.sec.samsung.net/");
                 executionContext.Output($"/CODE/ Intermediate docker image to pull: [{finalImageToPull}]");
             }
@@ -652,7 +653,7 @@ namespace GitHub.Runner.Worker
             }
 
             try {
-                if (Environment.USE_BART_INSTEADOF_GHCR == "true" && finalImageToPull != setupInfo.Container.Image) {
+                if (useBartInsteadOfGhcr == "true" && finalImageToPull != setupInfo.Container.Image) {
                     executionContext.Output($"/CODE/ Recovering original docker image. [{finalImageToPull}] -> [{setupInfo.Container.Image}]");
                     await dockerManager.DockerTag(executionContext, finalImageToPull, setupInfo.Container.Image);
                 }
