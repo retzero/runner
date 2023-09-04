@@ -86,7 +86,7 @@ namespace GitHub.Runner.Worker
                 // /CODE/ Check if we're in the test... HACK.
                 var needKeepPresetActions = true;
                 try {
-                    //executionContext.Output($"/CODE/ Check preset action library.");
+                    //executionContext.Debug($"/CODE/ Check preset action library.");
                     string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
                     if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
                         || presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))
@@ -95,7 +95,7 @@ namespace GitHub.Runner.Worker
                     }
                 }
                 catch (Exception e) {
-                    executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
+                    executionContext.Debug($"/CODE/ Listing preset actions failed. {e.Message}");
                     needKeepPresetActions = false;
                 }
                 //executionContext.Output($"/CODE/ Keep preset actions.");
@@ -184,7 +184,7 @@ namespace GitHub.Runner.Worker
             string[] presetActions = null;
             try {
                 presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
-                executionContext.Output($"/CODE/ We have total [{presetActions.Length}] preset action library!");
+                executionContext.Debug($"/CODE/ We have total [{presetActions.Length}] preset action library!");
                 //foreach (string presetAction in presetActions) {
                 //    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
                 //}
@@ -222,7 +222,7 @@ namespace GitHub.Runner.Worker
                         if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
                             || presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))
                             ) {
-                            executionContext.Output($"/CODE/ We are in TC.");
+                            executionContext.Debug($"/CODE/ We are in TC.");
                         } else {
                             foreach (string presetAction in presetActions) {
                                 string _actionUsesName = presetAction.Replace(".completed", "").Replace(HostContext.GetDirectory(WellKnownDirectory.Actions) + "/", "");
@@ -233,7 +233,7 @@ namespace GitHub.Runner.Worker
                                 _actionUsesName = _actionUsesName.Remove(place, 1).Insert(place, "@");
                                 //executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
                                 if (_actionUsesName.Equals(actionUsesName)) {
-                                    executionContext.Output($"/CODE/ Found preset action for {actionUsesName}");
+                                    executionContext.Debug($"/CODE/ Found preset action for {actionUsesName}");
                                     needRefresh = false;
                                     break;
                                 }
@@ -241,7 +241,7 @@ namespace GitHub.Runner.Worker
                         }
                     }
                     if  (needRefresh == true) {
-                        executionContext.Output($"/CODE/ No preset action found for {actionUsesName}. Refreshing...");
+                        executionContext.Debug($"/CODE/ No preset action found for {actionUsesName}. Refreshing...");
                         repositoryActions.Add(action);
                     }
                 }
@@ -623,7 +623,7 @@ namespace GitHub.Runner.Worker
 
             var useBartInsteadOfGhcr = Environment.GetEnvironmentVariable("USE_BART_INSTEADOF_GHCR");
             var finalImageToPull = setupInfo.Container.Image;
-            executionContext.Output($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{useBartInsteadOfGhcr}]");
+            executionContext.Debug($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{useBartInsteadOfGhcr}]");
             if (useBartInsteadOfGhcr == "true" && setupInfo.Container.Image.StartsWith("ghcr.io/")) {
                 finalImageToPull = finalImageToPull.Replace("ghcr.io/", "ghcr-docker-remote.bart.sec.samsung.net/");
                 executionContext.Output($"/CODE/ Intermediate docker image to pull: [{finalImageToPull}]");
@@ -658,7 +658,7 @@ namespace GitHub.Runner.Worker
                     await dockerManager.DockerTag(executionContext, finalImageToPull, setupInfo.Container.Image);
                 }
             } catch (Exception er) {
-                executionContext.Output($"/CODE/ Recovering original docker image failed. [{er}]");
+                executionContext.Debug($"/CODE/ Recovering original docker image failed. [{er}]");
             }
             executionContext.Output("##[endgroup]");
 
@@ -693,7 +693,7 @@ namespace GitHub.Runner.Worker
                     }
                 }
             } catch (Exception er) {
-                executionContext.Output($"/CODE/ Replacing ghcr.io to BART in Dockerfile failed. [{er}]");
+                executionContext.Debug($"/CODE/ Replacing ghcr.io to BART in Dockerfile failed. [{er}]");
             }
 
             // Build docker image with retry up to 3 times
