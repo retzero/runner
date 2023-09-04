@@ -185,9 +185,9 @@ namespace GitHub.Runner.Worker
             try {
                 presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
                 executionContext.Output($"/CODE/ We have total [{presetActions.Length}] preset action library!");
-                foreach (string presetAction in presetActions) {
-                    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
-                }
+                //foreach (string presetAction in presetActions) {
+                //    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
+                //}
             }
             catch (Exception e) {
                 executionContext.Output($"/CODE/ Listing preset actions failed. {e.Message}");
@@ -216,7 +216,7 @@ namespace GitHub.Runner.Worker
                     var repositoryReference = action.Reference as Pipelines.RepositoryPathReference;
                     ArgUtil.NotNull(repositoryReference, nameof(repositoryReference));
                     var actionUsesName = repositoryReference.Name + "@" + repositoryReference.Ref;
-                    executionContext.Output($"/CODE/ {actionUsesName} => {repositoryReference.Path}");
+                    //executionContext.Output($"/CODE/ {actionUsesName} => {repositoryReference.Path}");
                     var needRefresh = true;
                     if (presetActions != null && presetActions.Length > 0) {
                         if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
@@ -231,7 +231,7 @@ namespace GitHub.Runner.Worker
                                     continue;
                                 }
                                 _actionUsesName = _actionUsesName.Remove(place, 1).Insert(place, "@");
-                                executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
+                                //executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
                                 if (_actionUsesName.Equals(actionUsesName)) {
                                     executionContext.Output($"/CODE/ Found preset action for {actionUsesName}");
                                     needRefresh = false;
