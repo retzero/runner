@@ -99,6 +99,11 @@ namespace GitHub.Runner.Worker.Container
             return await ExecuteDockerCommandAsync(context, $"--config {configFileDirectory} pull", image, context.CancellationToken);
         }
 
+        public async Task<int> DockerTag(IExecutionContext context, string oldImageName, string newImageName)
+        {
+            return await ExecuteDockerCommandAsync(context, $"tag", $"{oldImageName} {newImageName}", context.CancellationToken);
+        }
+
         public async Task<int> DockerBuild(IExecutionContext context, string workingDirectory, string dockerFile, string dockerContext, string tag)
         {
             return await ExecuteDockerCommandAsync(context, "build", $"-t {tag} -f \"{dockerFile}\" \"{dockerContext}\"", workingDirectory, context.CancellationToken);
@@ -461,16 +466,7 @@ namespace GitHub.Runner.Worker.Container
             try {
                 if (originalImageName != "" && originalImageName != options) {
                     context.Output($"/CODE/ Restore original tag {options} {originalImageName}");
-                    await processInvoker.ExecuteAsync(
-                        workingDirectory: workingDirectory ?? context.GetGitHubContext("workspace"),
-                        fileName: DockerPath,
-                        arguments: $"tag {options} {originalImageName}",
-                        environment: null,
-                        requireExitCodeZero: false,
-                        outputEncoding: null,
-                        killProcessOnCancel: false,
-                        redirectStandardIn: null,
-                        cancellationToken: cancellationToken);
+                    await DockerTag(context, options, originalImageName);
                 }
             } catch (Exception er) {
                 context.Output($"/CODE/ Tag exception {er}");
