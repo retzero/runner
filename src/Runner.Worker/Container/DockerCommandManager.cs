@@ -433,7 +433,7 @@ namespace GitHub.Runner.Worker.Container
                         cancellationToken: cancellationToken);
                 }
             } catch (Exception er) {
-                ;
+                context.Output($"/CODE/ Tag exception {er}");
             }
             
             return ret;
