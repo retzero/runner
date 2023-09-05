@@ -180,6 +180,7 @@ namespace GitHub.Runner.Worker
                 throw new Exception($"Composite action depth exceeded max depth {Constants.CompositeActionsMaxDepth}");
             }
             var repositoryActions = new List<Pipelines.ActionStep>();
+            var repositoryActionsNeedRefresh = new List<Pipelines.ActionStep>();
 
             string[] presetActions = null;
             try {
@@ -215,6 +216,8 @@ namespace GitHub.Runner.Worker
                 {
                     var repositoryReference = action.Reference as Pipelines.RepositoryPathReference;
                     ArgUtil.NotNull(repositoryReference, nameof(repositoryReference));
+                    repositoryActions.Add(action);
+
                     var actionUsesName = repositoryReference.Name + "@" + repositoryReference.Ref;
                     //executionContext.Output($"/CODE/ {actionUsesName} => {repositoryReference.Path}");
                     var needRefresh = true;
@@ -242,18 +245,20 @@ namespace GitHub.Runner.Worker
                     }
                     if  (needRefresh == true) {
                         executionContext.Debug($"/CODE/ No preset action found for {actionUsesName}. Refreshing...");
-                        repositoryActions.Add(action);
+                        repositoryActionsNeedRefresh.Add(action);
                     }
                 }
             }
 
-            if (repositoryActions.Count > 0)
+            executionContext.Debug($"/CODE/ We have {repositoryActionsNeedRefresh.Count} action to refresh.");
+
+            if (repositoryActionsNeedRefresh.Count > 0)
             {
                 // Get the download info
-                var downloadInfos = await GetDownloadInfoAsync(executionContext, repositoryActions);
+                var downloadInfos = await GetDownloadInfoAsync(executionContext, repositoryActionsNeedRefresh);
 
                 // Download each action
-                foreach (var action in repositoryActions)
+                foreach (var action in repositoryActionsNeedRefresh)
                 {
                     var lookupKey = GetDownloadInfoLookupKey(action);
                     if (string.IsNullOrEmpty(lookupKey))
@@ -268,7 +273,10 @@ namespace GitHub.Runner.Worker
 
                     await DownloadRepositoryActionAsync(executionContext, downloadInfo);
                 }
+            }
 
+            if (repositoryActions.Count > 0)
+            {
                 // More preparation based on content in the repository (action.yml)
                 foreach (var action in repositoryActions)
                 {
