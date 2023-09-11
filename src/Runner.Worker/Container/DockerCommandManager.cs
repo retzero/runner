@@ -19,6 +19,7 @@ namespace GitHub.Runner.Worker.Container
         Task<DockerVersion> DockerVersion(IExecutionContext context);
         Task<int> DockerPull(IExecutionContext context, string image);
         Task<int> DockerPull(IExecutionContext context, string image, string configFileDirectory);
+        Task<int> DockerTag(IExecutionContext context, string oldImageName, string newImageName);
         Task<int> DockerBuild(IExecutionContext context, string workingDirectory, string dockerFile, string dockerContext, string tag);
         Task<string> DockerCreate(IExecutionContext context, ContainerInfo container);
         Task<int> DockerRun(IExecutionContext context, ContainerInfo container, EventHandler<ProcessDataReceivedEventArgs> stdoutDataReceived, EventHandler<ProcessDataReceivedEventArgs> stderrDataReceived);
@@ -97,6 +98,11 @@ namespace GitHub.Runner.Worker.Container
                 return await ExecuteDockerCommandAsync(context, $"pull", image, context.CancellationToken);
             }
             return await ExecuteDockerCommandAsync(context, $"--config {configFileDirectory} pull", image, context.CancellationToken);
+        }
+
+        public async Task<int> DockerTag(IExecutionContext context, string oldImageName, string newImageName)
+        {
+            return await ExecuteDockerCommandAsync(context, $"tag", $"{oldImageName} {newImageName}", context.CancellationToken);
         }
 
         public async Task<int> DockerBuild(IExecutionContext context, string workingDirectory, string dockerFile, string dockerContext, string tag)
@@ -393,7 +399,6 @@ namespace GitHub.Runner.Worker.Container
             var processInvoker = HostContext.CreateService<IProcessInvoker>();
             processInvoker.OutputDataReceived += stdoutDataReceived;
             processInvoker.ErrorDataReceived += stderrDataReceived;
-
 
             if (!Constants.Runner.Platform.Equals(Constants.OSPlatform.Linux))
             {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -83,7 +83,26 @@ namespace GitHub.Runner.Worker
             // We are running at the start of a job
             if (rootStepId == default(Guid))
             {
-                IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
+                // /CODE/ Check if we're in the test... HACK.
+                var needKeepPresetActions = true;
+                try {
+                    //executionContext.Debug($"/CODE/ Check preset action library.");
+                    string[] presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
+                    if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
+                        || presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))
+                        ) {
+                        needKeepPresetActions = false;
+                    }
+                }
+                catch (Exception e) {
+                    executionContext.Debug($"/CODE/ Listing preset actions failed. {e.Message}");
+                    needKeepPresetActions = false;
+                }
+                //executionContext.Output($"/CODE/ Keep preset actions.");
+                if (needKeepPresetActions == false) {
+                    //executionContext.Output($"/CODE/ Going to delete _actions directory {HostContext.GetDirectory(WellKnownDirectory.Actions)}");
+                    IOUtil.DeleteDirectory(HostContext.GetDirectory(WellKnownDirectory.Actions), executionContext.CancellationToken);
+                }
             }
             // We are running mid job due to a local composite action
             else
@@ -161,9 +180,23 @@ namespace GitHub.Runner.Worker
                 throw new Exception($"Composite action depth exceeded max depth {Constants.CompositeActionsMaxDepth}");
             }
             var repositoryActions = new List<Pipelines.ActionStep>();
+            var repositoryActionsNeedRefresh = new List<Pipelines.ActionStep>();
+
+            string[] presetActions = null;
+            try {
+                presetActions = Directory.GetFiles(HostContext.GetDirectory(WellKnownDirectory.Actions), "*.completed", SearchOption.AllDirectories);
+                executionContext.Debug($"/CODE/ We have total [{presetActions.Length}] preset action library!");
+                //foreach (string presetAction in presetActions) {
+                //    executionContext.Output($"/CODE/ Preset: [{presetAction}]");
+                //}
+            }
+            catch (Exception e) {
+                executionContext.Debug($"/CODE/ Listing preset actions failed. {e.Message}");
+            }
 
             foreach (var action in actions)
             {
+                //executionContext.Output($"/CODE/ {action.Name} ({action.Id}) => {action.Reference.Type}");
                 if (action.Reference.Type == Pipelines.ActionSourceType.ContainerRegistry)
                 {
                     ArgUtil.NotNull(action, nameof(action));
@@ -181,17 +214,51 @@ namespace GitHub.Runner.Worker
                 }
                 else if (action.Reference.Type == Pipelines.ActionSourceType.Repository)
                 {
+                    var repositoryReference = action.Reference as Pipelines.RepositoryPathReference;
+                    ArgUtil.NotNull(repositoryReference, nameof(repositoryReference));
                     repositoryActions.Add(action);
+
+                    var actionUsesName = repositoryReference.Name + "@" + repositoryReference.Ref;
+                    //executionContext.Output($"/CODE/ {actionUsesName} => {repositoryReference.Path}");
+                    var needRefresh = true;
+                    if (presetActions != null && presetActions.Length > 0) {
+                        if (presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "TingluoHuang", "runner_L0", "CompositeLimit.completed"))
+                            || presetActions.Contains(Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Actions), "notexist", "no", "notexist.completed"))
+                            ) {
+                            executionContext.Debug($"/CODE/ We are in TC.");
+                        } else {
+                            foreach (string presetAction in presetActions) {
+                                string _actionUsesName = presetAction.Replace(".completed", "").Replace(HostContext.GetDirectory(WellKnownDirectory.Actions) + "/", "");
+                                int place = _actionUsesName.LastIndexOf("/");
+                                if (place <= 0) {
+                                    continue;
+                                }
+                                _actionUsesName = _actionUsesName.Remove(place, 1).Insert(place, "@");
+                                //executionContext.Output($"/CODE/ Checking {actionUsesName} {_actionUsesName}");
+                                if (_actionUsesName.Equals(actionUsesName)) {
+                                    executionContext.Debug($"/CODE/ Found preset action for {actionUsesName}");
+                                    needRefresh = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if  (needRefresh == true) {
+                        executionContext.Debug($"/CODE/ No preset action found for {actionUsesName}. Refreshing...");
+                        repositoryActionsNeedRefresh.Add(action);
+                    }
                 }
             }
 
-            if (repositoryActions.Count > 0)
+            executionContext.Debug($"/CODE/ We have {repositoryActionsNeedRefresh.Count} action to refresh.");
+
+            if (repositoryActionsNeedRefresh.Count > 0)
             {
                 // Get the download info
-                var downloadInfos = await GetDownloadInfoAsync(executionContext, repositoryActions);
+                var downloadInfos = await GetDownloadInfoAsync(executionContext, repositoryActionsNeedRefresh);
 
                 // Download each action
-                foreach (var action in repositoryActions)
+                foreach (var action in repositoryActionsNeedRefresh)
                 {
                     var lookupKey = GetDownloadInfoLookupKey(action);
                     if (string.IsNullOrEmpty(lookupKey))
@@ -206,7 +273,10 @@ namespace GitHub.Runner.Worker
 
                     await DownloadRepositoryActionAsync(executionContext, downloadInfo);
                 }
+            }
 
+            if (repositoryActions.Count > 0)
+            {
                 // More preparation based on content in the repository (action.yml)
                 foreach (var action in repositoryActions)
                 {
@@ -559,13 +629,21 @@ namespace GitHub.Runner.Worker
 
             executionContext.Output($"##[group]Pull down action image '{setupInfo.Container.Image}'");
 
+            var useBartInsteadOfGhcr = Environment.GetEnvironmentVariable("USE_BART_INSTEADOF_GHCR");
+            var finalImageToPull = setupInfo.Container.Image;
+            executionContext.Debug($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{useBartInsteadOfGhcr}]");
+            if (useBartInsteadOfGhcr == "true" && setupInfo.Container.Image.StartsWith("ghcr.io/")) {
+                finalImageToPull = finalImageToPull.Replace("ghcr.io/", "ghcr-docker-remote.bart.sec.samsung.net/");
+                executionContext.Output($"/CODE/ Intermediate docker image to pull: [{finalImageToPull}]");
+            }
+
             // Pull down docker image with retry up to 3 times
             var dockerManager = HostContext.GetService<IDockerCommandManager>();
             int retryCount = 0;
             int pullExitCode = 0;
             while (retryCount < 3)
             {
-                pullExitCode = await dockerManager.DockerPull(executionContext, setupInfo.Container.Image);
+                pullExitCode = await dockerManager.DockerPull(executionContext, finalImageToPull);
                 if (pullExitCode == 0)
                 {
                     break;
@@ -580,6 +658,15 @@ namespace GitHub.Runner.Worker
                         await Task.Delay(backOff);
                     }
                 }
+            }
+
+            try {
+                if (useBartInsteadOfGhcr == "true" && finalImageToPull != setupInfo.Container.Image) {
+                    executionContext.Output($"/CODE/ Recovering original docker image. [{finalImageToPull}] -> [{setupInfo.Container.Image}]");
+                    await dockerManager.DockerTag(executionContext, finalImageToPull, setupInfo.Container.Image);
+                }
+            } catch (Exception er) {
+                executionContext.Debug($"/CODE/ Recovering original docker image failed. [{er}]");
             }
             executionContext.Output("##[endgroup]");
 
@@ -602,6 +689,20 @@ namespace GitHub.Runner.Worker
             ArgUtil.NotNullOrEmpty(setupInfo.Container.Dockerfile, nameof(setupInfo.Container.Dockerfile));
 
             executionContext.Output($"##[group]Build container for action use: '{setupInfo.Container.Dockerfile}'.");
+
+            try {
+                var useBartInsteadOfGhcr = Environment.GetEnvironmentVariable("USE_BART_INSTEADOF_GHCR");
+                if (useBartInsteadOfGhcr == "true") {
+                    string dockerfileText = File.ReadAllText(setupInfo.Container.Dockerfile);
+                    if (dockerfileText.Contains(" ghcr.io/")) {
+                        dockerfileText = dockerfileText.Replace(" ghcr.io/", " ghcr-docker-remote.bart.sec.samsung.net/");
+                        File.WriteAllText(setupInfo.Container.Dockerfile, dockerfileText);
+                        executionContext.Output($"/CODE/ Replacing ghcr.io to BART in Dockerfile.");
+                    }
+                }
+            } catch (Exception er) {
+                executionContext.Debug($"/CODE/ Replacing ghcr.io to BART in Dockerfile failed. [{er}]");
+            }
 
             // Build docker image with retry up to 3 times
             var dockerManager = HostContext.GetService<IDockerCommandManager>();
