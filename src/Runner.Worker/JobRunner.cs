@@ -376,11 +376,11 @@ namespace GitHub.Runner.Worker
 
             if (jobContext.Global.Variables.TryGetValue(Constants.Runner.EnforcedNode12DetectedAfterEndOfLifeEnvVariable, out var node16ForceWarnings))
             {
-                jobContext.Warning("/CODE/ EnforcedNode12DetectedAfterEndOfLifeEnvVariable is true.");
+                jobContext.Debug("/CODE/ EnforcedNode12DetectedAfterEndOfLifeEnvVariable is true.");
                 var actions = string.Join(", ", StringUtil.ConvertFromJson<HashSet<string>>(node16ForceWarnings));
                 jobContext.Warning(string.Format(Constants.Runner.EnforcedNode12DetectedAfterEndOfLife, actions));
             } else {
-                jobContext.Warning("/CODE/ EnforcedNode12DetectedAfterEndOfLifeEnvVariable is false.");
+                jobContext.Debug("/CODE/ EnforcedNode12DetectedAfterEndOfLifeEnvVariable is false.");
             }
 
             try
