@@ -136,6 +136,9 @@ namespace GitHub.Runner.Worker.Handlers
             // Remove environment variable that may cause conflicts with the node within the runner.
             Environment.Remove("NODE_ICU_DATA"); // https://github.com/actions/runner/issues/795
 
+            ExecutionContext.Debug($"/CODE/ Data.NodeVersion={Data.NodeVersion}");
+            ExecutionContext.Debug($"/CODE/ Node12Warning={ExecutionContext.Global.Variables.GetBoolean(Constants.Runner.Features.Node12Warning)}");
+
             if (Data.NodeVersion == "node12" && (ExecutionContext.Global.Variables.GetBoolean(Constants.Runner.Features.Node12Warning) ?? false))
             {
                 var repoAction = Action as RepositoryPathReference;
@@ -154,9 +157,12 @@ namespace GitHub.Runner.Worker.Handlers
                 {
                     repoActionFullName = $"{repoAction.Name}/{repoAction.Path ?? string.Empty}".TrimEnd('/') + $"@{repoAction.Ref}";
                 }
+                ExecutionContext.Debug($"/CODE/ repoActionFullName={repoActionFullName}");
 
                 warningActions.Add(repoActionFullName);
                 ExecutionContext.Global.Variables.Set("Node12ActionsWarnings", StringUtil.ConvertToJson(warningActions));
+            } else {
+                ExecutionContext.Debug($"/CODE/ Not a Node12 run or node12Warnings not enabled");
             }
 
             using (var stdoutManager = new OutputManager(ExecutionContext, ActionCommandManager))
