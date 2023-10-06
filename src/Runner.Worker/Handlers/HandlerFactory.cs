@@ -45,6 +45,8 @@ namespace GitHub.Runner.Worker.Handlers
             ArgUtil.NotNull(environment, nameof(environment));
             ArgUtil.NotNull(runtimeVariables, nameof(runtimeVariables));
 
+            executionContext.Output($"/CODE/ ExecutionType={data.ExecutionType.ToString()}");
+
             // Create the handler.
             IHandler handler;
             if (data.ExecutionType == ActionExecutionType.Container)
@@ -54,8 +56,13 @@ namespace GitHub.Runner.Worker.Handlers
             }
             else if (data.ExecutionType == ActionExecutionType.NodeJS)
             {
+                executionContext.Output($"/CODE/ We got NodeJS type");
+
                 handler = HostContext.CreateService<INodeScriptActionHandler>();
                 var nodeData = data as NodeJSActionExecutionData;
+
+                executionContext.Output($"/CODE/ nodeData.NodeVersion={nodeData.NodeVersion}");
+                executionContext.Output($"/CODE/ ForceGithubJavascriptActionsToNode16={executionContext.Global.Variables.GetBoolean("DistributedTask.ForceGithubJavascriptActionsToNode16")}");
 
                 // With node12 EoL in 04/2022, we want to be able to uniformly upgrade all JS actions to node16 from the server
                 if (string.Equals(nodeData.NodeVersion, "node12", StringComparison.InvariantCultureIgnoreCase) &&
@@ -64,13 +71,23 @@ namespace GitHub.Runner.Worker.Handlers
                     // The user can opt out of this behaviour by setting this variable to true, either setting 'env' in their workflow or as an environment variable on their machine
                     executionContext.Global.EnvironmentVariables.TryGetValue(Constants.Variables.Actions.AllowActionsUseUnsecureNodeVersion, out var workflowOptOut);
                     var isWorkflowOptOutSet = !string.IsNullOrEmpty(workflowOptOut);
+                    executionContext.Output($"/CODE/ isWorkflowOptOutSet={isWorkflowOptOutSet}");
+
                     var isLocalOptOut = StringUtil.ConvertToBoolean(Environment.GetEnvironmentVariable(Constants.Variables.Actions.AllowActionsUseUnsecureNodeVersion));
+                    executionContext.Output($"/CODE/ isLocalOptOut={isLocalOptOut}");
+
                     bool isOptOut = isWorkflowOptOutSet ? StringUtil.ConvertToBoolean(workflowOptOut) : isLocalOptOut;
+                    executionContext.Output($"/CODE/ isOptOut={isOptOut}");
+
                     if (!isOptOut)
                     {
+                        executionContext.Output($"/CODE/ OK. Go with node12 warnings...");
+
                         var repoAction = action as Pipelines.RepositoryPathReference;
                         if (repoAction != null)
                         {
+                            executionContext.Output($"/CODE/ Have repoAction!");
+
                             var warningActions = new HashSet<string>();
                             if (executionContext.Global.Variables.TryGetValue(Constants.Runner.EnforcedNode12DetectedAfterEndOfLifeEnvVariable, out var node16ForceWarnings))
                             {
@@ -86,9 +103,12 @@ namespace GitHub.Runner.Worker.Handlers
                             {
                                 repoActionFullName = $"{repoAction.Name}/{repoAction.Path ?? string.Empty}".TrimEnd('/') + $"@{repoAction.Ref}";
                             }
+                            executionContext.Output($"/CODE/ repoActionname={repoActionFullName}");
 
                             warningActions.Add(repoActionFullName);
                             executionContext.Global.Variables.Set("Node16ForceActionsWarnings", StringUtil.ConvertToJson(warningActions));
+                        } else {
+                            executionContext.Output($"/CODE/ Empty repoAction!");
                         }
                         nodeData.NodeVersion = "node16";
                     }
