@@ -139,7 +139,8 @@ namespace GitHub.Runner.Worker.Handlers
             ExecutionContext.Debug($"/CODE/ Data.NodeVersion={Data.NodeVersion}");
             ExecutionContext.Debug($"/CODE/ Node12Warning={ExecutionContext.Global.Variables.GetBoolean(Constants.Runner.Features.Node12Warning)}");
 
-            if (Data.NodeVersion == "node12" && (ExecutionContext.Global.Variables.GetBoolean(Constants.Runner.Features.Node12Warning) ?? false))
+            //if (Data.NodeVersion == "node12" && (ExecutionContext.Global.Variables.GetBoolean(Constants.Runner.Features.Node12Warning) ?? false))
+            if (Data.NodeVersion == "node12" ?? false))
             {
                 var repoAction = Action as RepositoryPathReference;
                 var warningActions = new HashSet<string>();
