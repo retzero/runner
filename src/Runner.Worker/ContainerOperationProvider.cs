@@ -69,6 +69,24 @@ namespace GitHub.Runner.Worker
                 await _containerHookManager.PrepareJobAsync(executionContext, containers);
                 return;
             }
+
+            // Retry docker health check if failed.
+            int dockerRetryCount = 0;
+            while (dockerRetryCount < 3)
+            {
+                try
+                {
+                    await AssertCompatibleOS(executionContext);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    dockerRetryCount++;
+                    var backOff = BackoffTimerHelper.GetRandomBackoff(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(6));
+                    executionContext.Output($"/CODE/ Docker service is not healty. Retrying in {backOff.TotalSeconds} seconds... {e.Message}");
+                    await Task.Delay(backOff);
+                }
+            }
             await AssertCompatibleOS(executionContext);
 
             // Clean up containers left by previous runs
@@ -286,6 +304,21 @@ namespace GitHub.Runner.Worker
                 var containerEnv = await _dockerManager.DockerInspect(executionContext, container.ContainerId, configEnvFormat);
                 container.ContainerRuntimePath = DockerUtil.ParsePathFromConfigEnv(containerEnv);
                 executionContext.JobContext.Container["id"] = new StringContextData(container.ContainerId);
+
+                // Append well known internal domains
+                try
+                {
+                    executionContext.Output($"/CODE/ Altering hosts file if well-known domains file exist.");
+                    string translateDomainScript = Path.Combine(HostContext.GetDirectory(WellKnownDirectory.Work), "wellknown_domains.sh");
+                    string translateDomainContainerScript = Path.Combine(container.TranslateToContainerPath(HostContext.GetDirectory(WellKnownDirectory.Work)), "wellknown_domains.sh");
+                    if (File.Exists(translateDomainScript)) {
+                        await _dockerManager.DockerExec(executionContext, $"{container.ContainerId}", string.Empty, $"sh {translateDomainContainerScript}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    executionContext.Output($"/CODE/ Well known domains makeup failed. {e.Message}");
+                }
             }
             executionContext.Output("##[endgroup]");
         }
@@ -466,18 +499,22 @@ namespace GitHub.Runner.Worker
             {
                 throw new InvalidOperationException($"Failed to create directory to store registry client credentials: {e.Message}");
             }
-            var loginExitCode = await _dockerManager.DockerLogin(
-                executionContext,
-                configLocation,
-                container.RegistryServer,
-                container.RegistryAuthUsername,
-                container.RegistryAuthPassword);
-
-            if (loginExitCode != 0)
+            for(int loginAttempt = 1; loginAttempt <= 5; loginAttempt = loginAttempt + 1)
             {
-                throw new InvalidOperationException($"Docker login for '{container.RegistryServer}' failed with exit code {loginExitCode}");
+                var loginExitCode = await _dockerManager.DockerLogin(
+                    executionContext,
+                    configLocation,
+                    container.RegistryServer,
+                    container.RegistryAuthUsername,
+                    container.RegistryAuthPassword);
+                if (loginExitCode != 0)
+                {
+                    executionContext.Output($"/CODE/ Docker login for '{container.RegistryServer}' failed with exit code {loginExitCode}");
+                } else {
+                    return configLocation;
+                }
             }
-            return configLocation;
+            throw new InvalidOperationException($"Docker login attempt timeout.");
         }
 
         private void ContainerRegistryLogout(string configLocation)
@@ -530,7 +567,9 @@ namespace GitHub.Runner.Worker
             var initProcessCgroup = File.ReadLines("/proc/1/cgroup");
             if (initProcessCgroup.Any(x => x.IndexOf(":/docker/", StringComparison.OrdinalIgnoreCase) >= 0))
             {
-                throw new NotSupportedException("Container feature is not supported when runner is already running inside container.");
+                //throw new NotSupportedException("Container feature is not supported when runner is already running inside container.");
+                executionContext.Output($"Container feature is not supported when runner is already running inside container.");
+                executionContext.Output($"/CODE/ Run it anyway in our system.");
             }
 #endif
 
