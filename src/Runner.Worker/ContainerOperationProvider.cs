@@ -213,6 +213,10 @@ namespace GitHub.Runner.Worker
             // Before pulling, generate client authentication if required
             var configLocation = await ContainerRegistryLogin(executionContext, container);
 
+            if (container.ContainerImage.StartsWith("actions-docker.bart.sec.samsung.net/buildpack")) {
+                executionContext.Warning($"/CODE/ [X] Buildpack container is deprecated. For more information see: https://github.sec.samsung.net/code-actions/issues/issues/528#issuecomment-2381224 ");
+            }
+
             // Pull down docker image with retry up to 3 times
             int retryCount = 0;
             int pullExitCode = 0;
