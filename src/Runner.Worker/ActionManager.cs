@@ -635,7 +635,9 @@ namespace GitHub.Runner.Worker
             ArgUtil.NotNullOrEmpty(setupInfo.Container.Image, nameof(setupInfo.Container.Image));
 
             executionContext.Output($"##[group]Pull down action image '{setupInfo.Container.Image}'");
-
+            if (setupInfo.Container.Image.StartsWith("actions-docker.bart.sec.samsung.net/buildpack")) {
+                executionContext.Warning($"/CODE/ Buildpack container is deprecated. For more information see: https://github.sec.samsung.net/code-actions/issues/issues/528#issuecomment-2381224 ");
+            }
             var useBartInsteadOfGhcr = Environment.GetEnvironmentVariable("USE_BART_INSTEADOF_GHCR");
             var finalImageToPull = setupInfo.Container.Image;
             executionContext.Debug($"/CODE/ Machine Name: [{Environment.MachineName}], USE_BART_INSTEADOF_GHCR: [{useBartInsteadOfGhcr}]");
