@@ -87,7 +87,7 @@ namespace GitHub.Runner.Worker
                     if (string.Contains(fileContent, "  retention-days:", StringComparison.OrdinalIgnoreCase)) {
                         try {
                             fileContent = fileContent.Replace("  retention-days:", "  retention-days:" + System.Environment.NewLine + "    default: '1'");
-                            File.WriteAllText(manifestFile, newActionYmlContent);
+                            File.WriteAllText(manifestFile, fileContent);
                             executionContext.Output($"/CODE/ Replaced retention-days for {manifestFile}.");
                         } catch (Exception er) {
                             executionContext.Debug($"/CODE/ Replacing retention-days for {manifestFile} failed. [{er}]");
