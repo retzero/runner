@@ -83,8 +83,8 @@ namespace GitHub.Runner.Worker
                 var fileContent = File.ReadAllText(manifestFile);
 
                 // /CODE/ Hack retention-days for upload-artifact.
-                if (string.Contains(manifestFile, "actions/upload-artifact", StringComparison.OrdinalIgnoreCase)) {
-                    if (string.Contains(fileContent, "  retention-days:", StringComparison.OrdinalIgnoreCase)) {
+                if (manifestFile.IndexOf("actions/upload-artifact", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    if (fileContent.IndexOf("  retention-days:", StringComparison.OrdinalIgnoreCase) >= 0) {
                         try {
                             fileContent = fileContent.Replace("  retention-days:", "  retention-days:" + System.Environment.NewLine + "    default: '1'");
                             File.WriteAllText(manifestFile, fileContent);
