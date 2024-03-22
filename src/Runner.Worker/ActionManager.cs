@@ -450,12 +450,10 @@ namespace GitHub.Runner.Worker
                     var manifestManager = HostContext.GetService<IActionManifestManager>();
                     if (File.Exists(manifestFile))
                     {
-                        executionContext.Debug($"/CODE/ Found action.yml at {manifestFile}...");
                         definition.Data = manifestManager.Load(executionContext, manifestFile);
                     }
                     else
                     {
-                        executionContext.Debug($"/CODE/ Found action.yaml at {manifestFileYaml}...");
                         definition.Data = manifestManager.Load(executionContext, manifestFileYaml);
                     }
                     Trace.Verbose($"Action friendly name: '{definition.Data.Name}'");
