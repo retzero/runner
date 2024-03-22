@@ -84,11 +84,13 @@ namespace GitHub.Runner.Worker
 
                 // /CODE/ Hack retention-days for upload-artifact.
                 try {
-                    if (manifestFile.IndexOf("actions/upload-artifact", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    if (manifestFile.IndexOf("actions/upload-artifact/", StringComparison.OrdinalIgnoreCase) >= 0) {
                         if (fileContent.IndexOf("  retention-days:", StringComparison.OrdinalIgnoreCase) >= 0) {
+                            if (fileContent.IndexOf("  retention-days:" + System.Environment.NewLine + "    default: '1'", StringComparison.OrdinalIgnoreCase) < 0) {
                                 fileContent = fileContent.Replace("  retention-days:", "  retention-days:" + System.Environment.NewLine + "    default: '1'");
                                 File.WriteAllText(manifestFile, fileContent);
                                 executionContext.Output($"/CODE/ Replaced retention-days for {manifestFile}.");
+                            }
                         }
                     }
                 } catch (Exception er) {
