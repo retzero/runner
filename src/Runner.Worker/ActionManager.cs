@@ -1053,7 +1053,6 @@ namespace GitHub.Runner.Worker
             var actionManifestYaml = Path.Combine(actionEntryDirectory, Constants.Path.ActionManifestYamlFile);
             if (File.Exists(actionManifest) || File.Exists(actionManifestYaml))
             {
-                executionContext.Debug($"action.yml for action: '{actionManifest}'.");
                 var manifestManager = HostContext.GetService<IActionManifestManager>();
                 ActionDefinitionData actionDefinitionData = null;
                 if (File.Exists(actionManifest))
