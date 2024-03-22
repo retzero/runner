@@ -83,16 +83,16 @@ namespace GitHub.Runner.Worker
                 var fileContent = File.ReadAllText(manifestFile);
 
                 // /CODE/ Hack retention-days for upload-artifact.
-                if (manifestFile.IndexOf("actions/upload-artifact", StringComparison.OrdinalIgnoreCase) >= 0) {
-                    if (fileContent.IndexOf("  retention-days:", StringComparison.OrdinalIgnoreCase) >= 0) {
-                        try {
-                            fileContent = fileContent.Replace("  retention-days:", "  retention-days:" + System.Environment.NewLine + "    default: '1'");
-                            File.WriteAllText(manifestFile, fileContent);
-                            executionContext.Output($"/CODE/ Replaced retention-days for {manifestFile}.");
-                        } catch (Exception er) {
-                            executionContext.Debug($"/CODE/ Replacing retention-days for {manifestFile} failed. [{er}]");
+                try {
+                    if (manifestFile.IndexOf("actions/upload-artifact", StringComparison.OrdinalIgnoreCase) >= 0) {
+                        if (fileContent.IndexOf("  retention-days:", StringComparison.OrdinalIgnoreCase) >= 0) {
+                                fileContent = fileContent.Replace("  retention-days:", "  retention-days:" + System.Environment.NewLine + "    default: '1'");
+                                File.WriteAllText(manifestFile, fileContent);
+                                executionContext.Output($"/CODE/ Replaced retention-days for {manifestFile}.");
                         }
                     }
+                } catch (Exception er) {
+                    executionContext.Debug($"/CODE/ Replacing action.yml failed. [{er}]");
                 }
 
                 using (var stringReader = new StringReader(fileContent))
