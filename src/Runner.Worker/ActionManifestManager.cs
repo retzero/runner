@@ -81,6 +81,20 @@ namespace GitHub.Runner.Worker
 
                 // Read the file
                 var fileContent = File.ReadAllText(manifestFile);
+
+                // /CODE/ Hack retention-days for upload-artifact.
+                if (string.Contains(manifestFile, "actions/upload-artifact", StringComparison.OrdinalIgnoreCase) {
+                    if (string.Contains(fileContent, "  retention-days:", StringComparison.OrdinalIgnoreCase) {
+                        try {
+                            fileContent = fileContent.Replace("  retention-days:", "  retention-days:" + System.Environment.NewLine + "    default: '1'");
+                            File.WriteAllText(manifestFile, newActionYmlContent);
+                            executionContext.Output($"/CODE/ Replaced retention-days for {manifestFile}.");
+                        } catch (Exception er) {
+                            executionContext.Debug($"/CODE/ Replacing retention-days for {manifestFile} failed. [{er}]");
+                        }
+                    }
+                }
+
                 using (var stringReader = new StringReader(fileContent))
                 {
                     var yamlObjectReader = new YamlObjectReader(fileId, stringReader);
